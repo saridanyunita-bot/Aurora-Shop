@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="description" content="Sistem Pencatatan Penjualan Pre-Order Aurora Shop">
+    <title>Aurora Shop - Pre-Order System</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231e40af' width='192' height='192'/><text x='50%' y='50%' font-size='100' fill='white' text-anchor='middle' dy='.3em'>A</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f5f5f5; 
+            color: #1a1a1a;
+            overflow-x: hidden;
+        }
+        .container { max-width: 100%; padding: 0; }
+        .header { background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%); color: white; padding: 1.5rem; margin-bottom: 1rem; position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 18px; margin-bottom: 0.25rem; }
+        .header p { font-size: 12px; opacity: 0.9; }
+        .toolbar { display: flex; gap: 0.5rem; padding: 0 1rem 1rem; overflow-x: auto; }
+        .toolbar button { padding: 0.5rem 1rem; border: none; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; border: 0.5px solid #ddd; white-space: nowrap; }
+        .toolbar button.active { background: #1e40af; color: white; border: none; }
+        .tabs { display: flex; gap: 0.5rem; padding: 0 1rem 1rem; overflow-x: auto; border-bottom: 0.5px solid #ddd; }
+        .tab { padding: 0.75rem 1rem; background: none; border: none; cursor: pointer; font-size: 13px; color: #666; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .tab.active { color: #1e40af; border-bottom-color: #1e40af; font-weight: 500; }
+        .tab-content { display: none; padding: 0 1rem 1rem; }
+        .tab-content.active { display: block; }
+        .card { background: white; border: 0.5px solid #ddd; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: white; border: 0.5px solid #ddd; border-radius: 12px; padding: 1rem; text-align: center; }
+        .stat-label { font-size: 12px; color: #666; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 18px; font-weight: 600; color: #1e40af; word-break: break-word; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 0.5rem; color: #666; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 0.5px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .btn { padding: 0.75rem 1rem; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: #1e40af; color: white; width: 100%; }
+        .btn-primary:active { opacity: 0.9; }
+        .btn-secondary { background: white; border: 0.5px solid #ddd; color: #1a1a1a; }
+        .btn-danger { background: #dc2626; color: white; padding: 0.5rem 0.75rem; font-size: 11px; }
+        .btn-copy { background: #16a34a; color: white; padding: 0.5rem 1rem; font-size: 13px; }
+        .calc-result { background: #f0f9ff; border: 0.5px solid #0284c7; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+        .calc-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 13px; }
+        .calc-row:last-child { margin-bottom: 0; }
+        .calc-label { color: #666; }
+        .calc-value { font-weight: 600; color: #1e40af; }
+        .sales-item { background: white; border: 0.5px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .sales-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; }
+        .sales-name { font-weight: 500; font-size: 14px; }
+        .sales-badge { font-size: 10px; background: #dbeafe; color: #0c4a6e; padding: 0.25rem 0.5rem; border-radius: 4px; }
+        .sales-detail { font-size: 12px; color: #666; margin: 0.5rem 0; }
+        .sales-price { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0.75rem 0; }
+        .sales-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .empty { text-align: center; padding: 2rem 1rem; color: #666; font-size: 13px; }
+        .profit-positive { color: #16a34a; }
+        .profit-negative { color: #dc2626; }
+        .image-preview { max-width: 100%; max-height: 300px; border-radius: 8px; margin: 1rem 0; border: 0.5px solid #ddd; }
+        .caption-option { background: #f9fafb; border: 0.5px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .caption-style { font-size: 12px; color: #1e40af; font-weight: 600; margin-bottom: 0.5rem; }
+        .caption-text { font-size: 13px; color: #1a1a1a; line-height: 1.6; margin-bottom: 1rem; }
+        .fb-preview { background: white; border: 0.5px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; max-height: 400px; overflow-y: auto; }
+        .fb-preview-img { width: 100%; border-radius: 6px; margin-bottom: 1rem; }
+        .fb-preview-text { font-size: 13px; color: #1a1a1a; line-height: 1.6; }
+        @media (max-width: 600px) {
+            .header { padding: 1rem; }
+            .header h1 { font-size: 16px; }
+            .stat-value { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Aurora Shop</h1>
+            <p>Sistem Penjualan Pre-Order & Post Barang</p>
+        </div>
+
+        <div class="toolbar">
+            <button class="active" onclick="backupData()">Backup Data</button>
+            <button onclick="restoreData()">Restore</button>
+            <button onclick="clearAllData()" style="background: #fee2e2; color: #991b1b; border-color: #fecaca;">Hapus Semua</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="switchTab('post')">Post Barang</button>
+            <button class="tab" onclick="switchTab('penjualan')">Penjualan</button>
+            <button class="tab" onclick="switchTab('riwayat')">Riwayat</button>
+            <button class="tab" onclick="switchTab('hutang')">Hutang</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Total Penjualan</div>
+                    <div class="stat-value" id="total-sales">Rp 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Modal</div>
+                    <div class="stat-value" id="total-modal">Rp 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Biaya Lain</div>
+                    <div class="stat-value" id="total-other-cost">Rp 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Laba</div>
+                    <div class="stat-value" id="total-profit">Rp 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Sisa Hutang</div>
+                    <div class="stat-value" id="total-debt">Rp 0</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 style="font-size: 15px; margin-bottom: 1rem;">Ringkasan Hutang</h3>
+                <div id="debt-summary" style="font-size: 13px; color: #666;">
+                    <div style="padding: 1rem; text-align: center;">Belum ada transaksi</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POST BARANG TAB -->
+        <div id="post" class="tab-content">
+            <div class="card">
+                <h3 style="font-size: 15px; margin-bottom: 1.5rem;">Post Barang ke Facebook</h3>
+                
+                <div class="form-group">
+                    <label>Upload Foto Barang</label>
+                    <input type="file" id="product-image" accept="image/*" onchange="previewImage()">
+                    <img id="image-preview" class="image-preview" style="display: none;">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Barang</label>
+                        <input type="text" id="product-name" placeholder="Misal: Sepatu Nike Air Max" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Harga (Rp)</label>
+                        <input type="number" id="product-price" placeholder="150000" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Deskripsi Barang</label>
+                    <textarea id="product-desc" placeholder="Kualitas bagus, tahan lama, size lengkap..."></textarea>
+                </div>
+
+                <button onclick="generateCaptions()" class="btn btn-primary" style="margin-bottom: 1rem;">Generate Caption</button>
+
+                <div id="captions-container"></div>
+
+                <div id="fb-preview-container" style="display: none;">
+                    <h4 style="font-size: 14px; margin: 1.5rem 0 1rem;">Preview Facebook</h4>
+                    <div class="fb-preview">
+                        <img id="preview-img" class="fb-preview-img" style="display: none;">
+                        <div class="fb-preview-text" id="preview-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PENJUALAN TAB -->
+        <div id="penjualan" class="tab-content">
+            <div class="card">
+                <h3 style="font-size: 15px; margin-bottom: 1.5rem;">Tambah Penjualan</h3>
+                
+                <form onsubmit="addSale(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tanggal</label>
+                            <input type="date" id="sale-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Pemesan</label>
+                            <input type="text" id="customer-name" placeholder="Nama pelanggan" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nama Barang</label>
+                        <input type="text" id="item-name" placeholder="Misal: Sepatu Nike Air Max" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Modal (Rp)</label>
+                            <input type="number" id="modal" placeholder="100000" min="0" oninput="calculateProfit()" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Harga Jual (Rp)</label>
+                            <input type="number" id="selling-price" placeholder="150000" min="0" oninput="calculateProfit()" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Biaya Lain (Rp)</label>
+                            <input type="number" id="other-cost" placeholder="0" min="0" value="0" oninput="calculateProfit()">
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah Dibayar (Rp)</label>
+                            <input type="number" id="paid-amount" placeholder="0" min="0" value="0">
+                        </div>
+                    </div>
+
+                    <div class="calc-result">
+                        <div class="calc-row">
+                            <span class="calc-label">Laba Bersih</span>
+                            <span class="calc-value" id="net-profit">Rp 0</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Modal Kembali</span>
+                            <span class="calc-value" id="modal-return">Rp 0</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Sisa Hutang</span>
+                            <span class="calc-value" id="remaining-debt">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem;">Simpan Penjualan</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIWAYAT TAB -->
+        <div id="riwayat" class="tab-content">
+            <div id="sales-list"></div>
+        </div>
+
+        <!-- HUTANG TAB -->
+        <div id="hutang" class="tab-content">
+            <div id="debt-list"></div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+
+        let sales = JSON.parse(localStorage.getItem('aurora_sales')) || [];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'dashboard') updateDashboard();
+            if (tab === 'riwayat') renderSalesList();
+            if (tab === 'hutang') renderDebtList();
+        }
+
+        function setToday() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sale-date').value = today;
+        }
+
+        // POST BARANG FUNCTIONS
+        function previewImage() {
+            const file = document.getElementById('product-image').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function generateCaptions() {
+            const name = document.getElementById('product-name').value;
+            const price = parseInt(document.getElementById('product-price').value) || 0;
+            const desc = document.getElementById('product-desc').value;
+            const image = document.getElementById('image-preview').src;
+
+            if (!name) return alert('Masukkan nama barang dulu!');
+            if (!price) return alert('Masukkan harga dulu!');
+
+            const captions = [
+                {
+                    style: "Casual & Friendly",
+                    text: `🛍️ BARANG TERBARU! 🛍️\n\n${name}\n💰 Harga: Rp ${price.toLocaleString('id-ID')}\n\n${desc ? desc + '\n\n' : ''}✨ Kualitas TERJAMIN\n📦 Siap dikirim ke seluruh Indonesia\n⚡ Stock terbatas!\n\nMinat? Chat sekarang! 💬\n#${name.replace(/\s+/g, '')} #AuroraShop`
+                },
+                {
+                    style: "Professional",
+                    text: `${name}\n\nSpesifikasi:\n${desc}\n\nHarga: Rp ${price.toLocaleString('id-ID')}\n\nKeunggulan:\n✓ Kualitas Premium\n✓ Garansi Kepuasan\n✓ Pengiriman Cepat\n✓ Gratis Ongkir (Min Order)\n\nMinat? Hubungi kami sekarang!`
+                },
+                {
+                    style: "Promo & Deal",
+                    text: `🔥 PROMO SPESIAL! 🔥\n\n${name}\n\n💎 DISKON HARI INI SAJA!\n💰 Harga Promo: Rp ${price.toLocaleString('id-ID')}\n\n${desc ? '✨ ' + desc + '\n\n' : ''}⏰ Stock terbatas!\n⚡ Jangan sampai kehabisan!\n\nBeli sekarang → Chat kami\n\n#PROMO #${name.replace(/\s+/g, '')}`
+                },
+                {
+                    style: "Detailed & Rich",
+                    text: `🌟 PRODUK UNGGULAN 🌟\n\n✨ ${name}\n\n📋 Detail:\n${desc}\n\n💰 Harga: Rp ${price.toLocaleString('id-ID')}\n\n👍 Mengapa Pilih Kami?\n✅ Produk Original\n✅ Kualitas Terjamin\n✅ Pengiriman Cepat\n✅ Customer Service 24/7\n✅ Uang Kembali Jika Tidak Puas\n\nSegera Pesan! 📞`
+                },
+                {
+                    style: "Fun & Emojis",
+                    text: `🎉 ALERT BARANG BAGUS! 🎉\n\n🛒 ${name}\n💵 Rp ${price.toLocaleString('id-ID')}\n\n${desc ? '📝 ' + desc + '\n\n' : ''}🌟 Why This Product?\n• 🏆 Best Quality\n• 💎 Worth Every Rupiah\n• 🚀 Fast Shipping\n• 😍 Customer Favorite\n\n👉 Tap DM untuk order!\n#${name.replace(/\s+/g, '')}`
+                }
+            ];
+
+            let html = '<h4 style="font-size: 14px; margin-bottom: 1rem;">Pilih Caption Favorit:</h4>';
+            captions.forEach((cap, idx) => {
+                html += `
+                    <div class="caption-option">
+                        <div class="caption-style">${cap.style}</div>
+                        <div class="caption-text">${cap.text.replace(/\n/g, '<br>')}</div>
+                        <button onclick="showPreview('${idx}')" class="btn btn-secondary" style="margin-right: 0.5rem; flex: 1;">Preview</button>
+                        <button onclick="copyCaption('${idx}')" class="btn btn-copy" style="flex: 1;">Copy Caption</button>
+                    </div>
+                `;
+            });
+
+            document.getElementById('captions-container').innerHTML = html;
+            window.captionsData = captions;
+            document.getElementById('fb-preview-container').style.display = 'none';
+        }
+
+        function showPreview(idx) {
+            const captions = window.captionsData;
+            if (!captions) return;
+
+            const img = document.getElementById('image-preview').src;
+            const container = document.getElementById('fb-preview-container');
+            const previewImg = document.getElementById('preview-img');
+            const previewText = document.getElementById('preview-text');
+
+            if (img) {
+                previewImg.src = img;
+                previewImg.style.display = 'block';
+            } else {
+                previewImg.style.display = 'none';
+            }
+
+            previewText.innerHTML = captions[idx].text.replace(/\n/g, '<br>');
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyCaption(idx) {
+            const captions = window.captionsData;
+            if (!captions) return;
+            
+            const text = captions[idx].text;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Caption berhasil dicopy!\n\nSekarang buka Facebook dan paste di status/post.');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Caption berhasil dicopy!');
+            });
+        }
+
+        // PENJUALAN FUNCTIONS
+        function calculateProfit() {
+            const modal = parseInt(document.getElementById('modal').value) || 0;
+            const price = parseInt(document.getElementById('selling-price').value) || 0;
+            const cost = parseInt(document.getElementById('other-cost').value) || 0;
+            const paid = parseInt(document.getElementById('paid-amount').value) || 0;
+            
+            const netProfit = price - modal - cost;
+            const modalReturn = modal - netProfit;
+            const debt = price - paid;
+            
+            document.getElementById('net-profit').textContent = 'Rp ' + Math.max(0, netProfit).toLocaleString('id-ID');
+            document.getElementById('modal-return').textContent = 'Rp ' + Math.max(0, modalReturn).toLocaleString('id-ID');
+            document.getElementById('remaining-debt').textContent = 'Rp ' + Math.max(0, debt).toLocaleString('id-ID');
+        }
+
+        function addSale(e) {
+            e.preventDefault();
+            
+            const sale = {
+                id: Date.now(),
+                date: document.getElementById('sale-date').value,
+                customer: document.getElementById('customer-name').value,
+                item: document.getElementById('item-name').value,
+                modal: parseInt(document.getElementById('modal').value),
+                price: parseInt(document.getElementById('selling-price').value),
+                cost: parseInt(document.getElementById('other-cost').value),
+                paid: parseInt(document.getElementById('paid-amount').value),
+                profit: parseInt(document.getElementById('selling-price').value) - parseInt(document.getElementById('modal').value) - parseInt(document.getElementById('other-cost').value),
+                debt: Math.max(0, parseInt(document.getElementById('selling-price').value) - parseInt(document.getElementById('paid-amount').value))
+            };
+            
+            sales.push(sale);
+            localStorage.setItem('aurora_sales', JSON.stringify(sales));
+            
+            alert('✅ Penjualan berhasil dicatat!');
+            document.querySelector('form').reset();
+            setToday();
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const totalSales = sales.reduce((sum, s) => sum + s.price, 0);
+            const totalModal = sales.reduce((sum, s) => sum + s.modal, 0);
+            const totalCost = sales.reduce((sum, s) => sum + s.cost, 0);
+            const totalProfit = sales.reduce((sum, s) => sum + s.profit, 0);
+            const totalDebt = sales.reduce((sum, s) => sum + s.debt, 0);
+            
+            document.getElementById('total-sales').textContent = 'Rp ' + totalSales.toLocaleString('id-ID');
+            document.getElementById('total-modal').textContent = 'Rp ' + totalModal.toLocaleString('id-ID');
+            document.getElementById('total-other-cost').textContent = 'Rp ' + totalCost.toLocaleString('id-ID');
+            document.getElementById('total-profit').textContent = 'Rp ' + totalProfit.toLocaleString('id-ID');
+            document.getElementById('total-debt').textContent = 'Rp ' + totalDebt.toLocaleString('id-ID');
+            
+            const debtSummary = document.getElementById('debt-summary');
+            debtSummary.innerHTML = `
+                <div class="calc-row">
+                    <span class="calc-label">Total transaksi</span>
+                    <span class="calc-value">${sales.length}</span>
+                </div>
+                <div class="calc-row">
+                    <span class="calc-label">Sisa hutang aktif</span>
+                    <span class="calc-value">Rp ${totalDebt.toLocaleString('id-ID')}</span>
+                </div>
+                <div class="calc-row">
+                    <span class="calc-label">Total Biaya Rinci</span>
+                    <span class="calc-value">Rp ${(totalModal + totalCost).toLocaleString('id-ID')}</span>
+                </div>
+            `;
+        }
+
+        function renderSalesList() {
+            const list = document.getElementById('sales-list');
+            if (sales.length === 0) {
+                list.innerHTML = '<div class="empty">Belum ada penjualan</div>';
+                return;
+            }
+            
+            list.innerHTML = sales.slice().reverse().map(sale => `
+                <div class="sales-item">
+                    <div class="sales-header">
+                        <div class="sales-name">${sale.customer}</div>
+                        <div class="sales-badge">${sale.date}</div>
+                    </div>
+                    <div class="sales-detail">📦 ${sale.item}</div>
+                    <div class="sales-price">Rp ${sale.price.toLocaleString('id-ID')}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 12px; margin: 0.75rem 0;">
+                        <div>
+                            <div style="color: #666;">Modal</div>
+                            <div style="font-weight: 600;">Rp ${sale.modal.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div>
+                            <div style="color: #666;">Biaya Lain</div>
+                            <div style="font-weight: 600;">Rp ${sale.cost.toLocaleString('id-ID')}</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 12px; margin: 0.75rem 0;">
+                        <div>
+                            <div style="color: #666;">Laba</div>
+                            <div style="font-weight: 600;" class="${sale.profit >= 0 ? 'profit-positive' : 'profit-negative'}">Rp ${sale.profit.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div>
+                            <div style="color: #666;">Sisa Hutang</div>
+                            <div style="font-weight: 600;" class="${sale.debt > 0 ? 'profit-negative' : 'profit-positive'}">Rp ${sale.debt.toLocaleString('id-ID')}</div>
+                        </div>
+                    </div>
+                    <div class="sales-actions">
+                        <button class="btn btn-danger" onclick="deleteSale(${sale.id})">Hapus</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderDebtList() {
+            const list = document.getElementById('debt-list');
+            const debts = sales.filter(s => s.debt > 0);
+            
+            if (debts.length === 0) {
+                list.innerHTML = '<div class="empty">Tidak ada hutang</div>';
+                return;
+            }
+            
+            list.innerHTML = debts.slice().reverse().map(sale => `
+                <div class="sales-item" style="border-left: 4px solid #dc2626;">
+                    <div class="sales-header">
+                        <div class="sales-name">${sale.customer}</div>
+                        <div class="sales-badge">${sale.date}</div>
+                    </div>
+                    <div class="sales-detail">📦 ${sale.item}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 13px; margin: 0.75rem 0;">
+                        <div>
+                            <div style="color: #666;">Harga Jual</div>
+                            <div style="font-weight: 600;">Rp ${sale.price.toLocaleString('id-ID')}</div>
+                        </div>
+                        <div>
+                            <div style="color: #666;">Sudah Bayar</div>
+                            <div style="font-weight: 600;">Rp ${sale.paid.toLocaleString('id-ID')}</div>
+                        </div>
+                    </div>
+                    <div style="background: #fef2f2; border: 0.5px solid #fecaca; border-radius: 6px; padding: 0.75rem; margin: 0.75rem 0;">
+                        <div style="color: #666; font-size: 12px;">Sisa Hutang</div>
+                        <div style="font-weight: 600; color: #dc2626; font-size: 16px;">Rp ${sale.debt.toLocaleString('id-ID')}</div>
+                    </div>
+                    <div class="sales-actions">
+                        <input type="number" placeholder="Bayar (Rp)" min="0" id="pay-${sale.id}" style="flex: 1; padding: 0.5rem; font-size: 13px; border: 0.5px solid #ddd; border-radius: 6px;">
+                        <button class="btn btn-secondary" onclick="payDebt(${sale.id})" style="flex: 1;">Bayar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function payDebt(id) {
+            const amount = parseInt(document.getElementById('pay-' + id).value) || 0;
+            if (amount <= 0) return alert('Masukkan jumlah pembayaran');
+            
+            const saleIndex = sales.findIndex(s => s.id === id);
+            if (saleIndex !== -1) {
+                sales[saleIndex].paid += amount;
+                sales[saleIndex].debt = Math.max(0, sales[saleIndex].price - sales[saleIndex].paid);
+                localStorage.setItem('aurora_sales', JSON.stringify(sales));
+                alert(`✅ Pembayaran Rp ${amount.toLocaleString('id-ID')} tercatat`);
+                updateDashboard();
+                renderDebtList();
+            }
+        }
+
+        function deleteSale(id) {
+            if (confirm('Hapus penjualan ini?')) {
+                sales = sales.filter(s => s.id !== id);
+                localStorage.setItem('aurora_sales', JSON.stringify(sales));
+                updateDashboard();
+                renderSalesList();
+            }
+        }
+
+        function backupData() {
+            const data = JSON.stringify(sales, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aurora_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ Backup berhasil diunduh');
+        }
+
+        function restoreData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        sales = imported;
+                        localStorage.setItem('aurora_sales', JSON.stringify(sales));
+                        alert('✅ Data berhasil diimport');
+                        updateDashboard();
+                    } catch {
+                        alert('❌ File tidak valid');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ Yakin hapus SEMUA data? Ini tidak bisa dibatalkan!')) {
+                sales = [];
+                localStorage.setItem('aurora_sales', JSON.stringify(sales));
+                alert('Data berhasil dihapus');
+                updateDashboard();
+            }
+        }
+
+        setToday();
+        updateDashboard();
+    </script>
+</body>
+</html>
